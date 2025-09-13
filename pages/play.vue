@@ -1,5 +1,6 @@
 <template>
     <div class="game-container">
+        <button @click="goHome" class="home-button">🏠 Ana Sayfa</button>
         <div v-if="gameStore.currentImage || gameStore.isLoading" class="game-card">
             <!-- Klasik Mod: Soru Sayacı -->
             <div v-if="gameStore.gameMode === 'classic'" class="progress-bar-container">
@@ -34,16 +35,18 @@
                 <!-- API'den resim beklenirken yükleme göstergesi -->
                 <div v-if="gameStore.isLoading" class="loading-indicator">Yükleniyor...</div>
                 <!-- Resim yüklendiğinde göster -->
-                <img v-else-if="gameStore.currentImage" :src="gameStore.currentImage.imageUrl" alt="Soru görseli" class="question-image">
+                <img v-else-if="gameStore.currentImage" :src="gameStore.currentImage.imageUrl" alt="Soru görseli"
+                    class="question-image">
             </div>
 
             <!-- Cevap verilmediyse butonları göster -->
             <div v-if="gameStore.lastAnswerCorrect === null && !gameStore.isLoading" class="answer-buttons">
-                <button @click="gameStore.answerQuestion('human')" :disabled="gameStore.isLoading">👨‍🎨 İnsan Yapımı</button>
+                <button @click="gameStore.answerQuestion('human')" :disabled="gameStore.isLoading">👨‍🎨 İnsan
+                    Yapımı</button>
                 <button @click="gameStore.answerQuestion('ai')" :disabled="gameStore.isLoading">🤖 AI Yapımı</button>
             </div>
-            
-            <!-- Cevap verildiyse sonucu ve sonraki butonunu göster -->
+
+            <!-- Cevap verildiyse sonucu göster -->
             <div v-if="gameStore.lastAnswerCorrect !== null" class="feedback-container">
                 <div v-if="gameStore.lastAnswerCorrect" class="feedback correct">
                     <p>🎉 Doğru!</p>
@@ -51,7 +54,8 @@
                 <div v-else class="feedback incorrect">
                     <p>😞 Yanlış! Doğru cevap: {{ gameStore.lastCorrectAnswerIsAI ? 'AI Yapımı' : 'İnsan Yapımı' }}</p>
                 </div>
-                <button @click="gameStore.nextQuestion()" class="next-button">
+                <!-- Sadece klasik modda sonraki soru butonu göster -->
+                <button v-if="gameStore.gameMode === 'classic'" @click="gameStore.nextQuestion()" class="next-button">
                     Sonraki Soru →
                 </button>
             </div>
@@ -70,6 +74,11 @@ import { onMounted, watch } from 'vue';
 
 const gameStore = useGameStore();
 const router = useRouter();
+
+const goHome = () => {
+    gameStore.resetGame();
+    router.push('/');
+};
 
 // Oyun bittiğinde sonuçlar sayfasına yönlendir
 watch(() => gameStore.gameFinished, (isFinished) => {
@@ -107,10 +116,56 @@ onMounted(() => {
     border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 30px;
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
     text-align: center;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
     color: #fff;
+}
+
+/* Tablet ve büyük ekranlar için */
+@media (min-width: 768px) {
+    .game-card {
+        max-width: 700px;
+        padding: 40px;
+    }
+}
+
+/* Desktop ekranlar için */
+@media (min-width: 1024px) {
+    .game-card {
+        max-width: 800px;
+        padding: 50px;
+    }
+}
+
+/* Büyük desktop ekranlar için */
+@media (min-width: 1440px) {
+    .game-card {
+        max-width: 900px;
+        padding: 60px;
+    }
+}
+
+.home-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    z-index: 1000;
+}
+
+.home-button:hover {
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .progress-bar-container {
@@ -155,17 +210,25 @@ onMounted(() => {
 
 .question-image {
     width: 100%;
-    height: auto;
+    max-height: 400px;
     border-radius: 16px;
     margin-bottom: 15px;
-    object-fit: cover;
-    aspect-ratio: 16 / 9;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    object-fit: contain;
+    /* border: 2px solid rgba(255, 255, 255, 0.1); */
+    /* background-color: rgba(0, 0, 0, 0.1); */
 }
 
-.feature-text {
-    font-size: 1.1rem;
-    font-weight: 600;
+/* Büyük ekranlar için resim boyutunu artır */
+@media (min-width: 768px) {
+    .question-image {
+        max-height: 450px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .question-image {
+        max-height: 500px;
+    }
 }
 
 .answer-buttons {

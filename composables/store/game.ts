@@ -12,17 +12,20 @@ export const useGameStore = defineStore('gameStore', () => {
   const currentImage = ref<ImageResponse | null>(null)
   const gameMode = ref<'classic' | 'time' | null>(null)
 
+  // Klasik mod için önceden yüklenmiş görseller
+  const preloadedImages = ref<ImageResponse[]>([])
+
   // Sonuç ve skorlar
   const lastAnswerCorrect = ref<boolean | null>(null)
   const lastCorrectAnswerIsAI = ref<boolean | null>(null)
   const classicScore = ref({ correct: 0, incorrect: 0 })
   const timeAttackScore = ref(0)
-  
+
   // Oyunun genel durumu
   const gameFinished = ref(false)
   const currentQuestionIndex = ref(0) // Klasik mod için soru sayacı
   const isLoading = ref(false) // API'den cevap beklerken kullanılacak
-  
+
   // Zamanlı mod için
   const timeRemaining = ref(30)
   let timerInterval: ReturnType<typeof setInterval> | null = null
@@ -47,6 +50,17 @@ export const useGameStore = defineStore('gameStore', () => {
     }
   }
 
+  function startTimer() {
+    if (timerInterval) return; // Zaten çalışıyorsa tekrar başlatma
+    timerInterval = setInterval(() => {
+      timeRemaining.value--
+      if (timeRemaining.value <= 0) {
+        stopTimer()
+        gameFinished.value = true
+      }
+    }, 1000)
+  }
+
   // Önceki oyundan kalan her şeyi temizler
   function resetGame() {
     stopTimer()
@@ -60,9 +74,25 @@ export const useGameStore = defineStore('gameStore', () => {
     currentQuestionIndex.value = 0
     isLoading.value = false
     timeRemaining.value = 30
+    preloadedImages.value = []
   }
 
-  // API'den yeni, rastgele bir resim çeker
+  // Klasik mod için 10 görseli önceden yükler
+  async function preloadClassicImages() {
+    isLoading.value = true
+    try {
+      const data = await $fetch<ImageResponse[]>(`${apiBase}/api/Game/random-images`)
+      preloadedImages.value = data
+      currentImage.value = data?.[0] || null // İlk görseli göster
+    } catch (error) {
+      console.error("Görseller önceden yüklenirken hata oluştu:", error)
+      alert("Sunucuya bağlanılamadı. Backend API'sinin çalıştığından emin olun.")
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // API'den yeni, rastgele bir resim çeker (sadece zamanlı mod için)
   async function fetchNextImage() {
     isLoading.value = true
     lastAnswerCorrect.value = null
@@ -75,6 +105,10 @@ export const useGameStore = defineStore('gameStore', () => {
       alert("Sunucuya bağlanılamadı. Backend API'sinin çalıştığından emin olun.")
     } finally {
       isLoading.value = false
+      // Zamanlı modda, yeni resim geldikten sonra zamanlayıcıyı yeniden başlat
+      if (gameMode.value === 'time' && !gameFinished.value) {
+        startTimer()
+      }
     }
   }
 
@@ -82,16 +116,12 @@ export const useGameStore = defineStore('gameStore', () => {
   async function startGame(mode: 'classic' | 'time') {
     resetGame()
     gameMode.value = mode
-    await fetchNextImage() // İlk resmi çekerek oyuna başla
 
-    if (mode === 'time') {
-      timerInterval = setInterval(() => {
-        timeRemaining.value--
-        if (timeRemaining.value <= 0) {
-          stopTimer()
-          gameFinished.value = true
-        }
-      }, 1000)
+    if (mode === 'classic') {
+      await preloadClassicImages() // Klasik mod için 10 görseli önceden yükle
+    } else {
+      await fetchNextImage() // Zamanlı mod için tek görsel yükle
+      startTimer()
     }
   }
 
@@ -101,6 +131,11 @@ export const useGameStore = defineStore('gameStore', () => {
 
     const guessIsAI = guess === 'ai'
     isLoading.value = true
+
+    // Zamanlı modda, API isteği başlamadan önce zamanlayıcıyı durdur
+    if (gameMode.value === 'time') {
+      stopTimer()
+    }
 
     try {
       const response = await $fetch<{ isCorrect: boolean, correctAnswerIsAI: boolean }>(`${apiBase}/api/Game/submit-guess`, {
@@ -116,8 +151,12 @@ export const useGameStore = defineStore('gameStore', () => {
 
       if (gameMode.value === 'classic') {
         response.isCorrect ? classicScore.value.correct++ : classicScore.value.incorrect++
-      } else if (gameMode.value === 'time' && response.isCorrect) {
-        timeAttackScore.value += 100 // Puanlama mantığı basit tutuldu, geliştirilebilir.
+      } else if (gameMode.value === 'time') {
+        if (response.isCorrect) {
+          timeAttackScore.value += 100
+        }
+        // Cevap geldikten sonra beklemeden sonraki soruya geç
+        nextQuestion()
       }
 
     } catch (error) {
@@ -135,11 +174,15 @@ export const useGameStore = defineStore('gameStore', () => {
         gameFinished.value = true
         return
       }
-    }
-    
-    // Zamanlı modda oyun bitmediyse veya klasik modda bir sonraki soruya geçiliyorsa yeni resim çek
-    if (!gameFinished.value) {
-      await fetchNextImage()
+
+      // Önceden yüklenmiş görselleri kullan
+      currentImage.value = preloadedImages.value[currentQuestionIndex.value] || null
+      lastAnswerCorrect.value = null
+    } else {
+      // Zamanlı modda API'den yeni görsel çek
+      if (!gameFinished.value) {
+        await fetchNextImage()
+      }
     }
   }
 
@@ -147,7 +190,7 @@ export const useGameStore = defineStore('gameStore', () => {
     // State
     currentImage, gameMode, lastAnswerCorrect, lastCorrectAnswerIsAI,
     classicScore, timeAttackScore, gameFinished, currentQuestionIndex,
-    isLoading, timeRemaining,
+    isLoading, timeRemaining, preloadedImages,
     // Getters
     successRate,
     // Actions

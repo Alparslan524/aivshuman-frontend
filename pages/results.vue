@@ -32,8 +32,8 @@
                     <p>Toplam Puan</p>
                     <span class="total-score">🏆 {{ gameStore.timeAttackScore }}</span>
                 </div>
-                 <div class="score-details">
-                     <div class="detail-item">
+                <div class="score-details">
+                    <div class="detail-item">
                         <p>✔️ Doğru</p>
                         <span>{{ gameStore.classicScore.correct }}</span>
                     </div>
@@ -144,10 +144,34 @@ onMounted(() => {
     border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 40px;
     width: 90%;
-    max-width: 450px;
+    max-width: 550px;
     text-align: center;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
     color: #fff;
+}
+
+/* Tablet ve büyük ekranlar için */
+@media (min-width: 768px) {
+    .results-card {
+        max-width: 650px;
+        padding: 50px;
+    }
+}
+
+/* Desktop ekranlar için */
+@media (min-width: 1024px) {
+    .results-card {
+        max-width: 750px;
+        padding: 60px;
+    }
+}
+
+/* Büyük desktop ekranlar için */
+@media (min-width: 1440px) {
+    .results-card {
+        max-width: 850px;
+        padding: 70px;
+    }
 }
 
 .title {

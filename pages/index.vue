@@ -1,10 +1,8 @@
 <template>
   <div class="main-container">
     <div class="card">
-      <div class="logo">
-        <span class="icon">💡</span>
-      </div>
-      <h1>AivsHuman</h1>
+      <img src="/public/logo.png" alt="AivsHuman Logo" class="main-logo" />
+      <h1><span style="color: #c039f4;">AI</span> vs <span style="color: black;">Human</span></h1>
       <p class="subtitle">AI mı İnsan mı? Zekânı test et!</p>
 
       <div class="mode-selection-container">
@@ -19,7 +17,7 @@
           </p>
         </div>
 
-        <div class="mode-card" :class="{ 'selected': selectedMode === 'time' }" @click="selectMode('time')">
+        <!-- <div class="mode-card" :class="{ 'selected': selectedMode === 'time' }" @click="selectMode('time')">
           <div class="mode-header">
             <span class="mode-icon">⏱️</span>
             <h2>Zamana Karşı</h2>
@@ -28,12 +26,8 @@
             <span class="status-dot time"></span>
             30 saniyede en yüksek puanı topla
           </p>
-        </div>
+        </div> -->
       </div>
-
-      <button class="start-button" @click="startGame" :disabled="!selectedMode">
-        🚀 Oyuna Başla
-      </button>
 
       <p class="footer-text">Yapay zeka çağında insanlığını koru! 😎</p>
     </div>
@@ -51,14 +45,8 @@ const selectedMode = ref(null)
 
 const selectMode = (mode) => {
   selectedMode.value = mode
-}
-
-const startGame = () => {
-  if (selectedMode.value) {
-    //startGame artık async, ama burada beklemenize gerek yok.
-    gameStore.startGame(selectedMode.value) 
-    router.push('/play')
-  }
+  gameStore.startGame(mode)
+  router.push('/play')
 }
 </script>
 
@@ -100,24 +88,40 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 40px;
   width: 90%;
-  max-width: 400px;
+  max-width: 450px;
   text-align: center;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }
 
-.logo {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #5c6bc0, #8e44ad);
-  border-radius: 24px;
-  margin-bottom: 24px;
+/* Tablet ve büyük ekranlar için */
+@media (min-width: 768px) {
+  .card {
+    max-width: 600px;
+    padding: 50px;
+  }
 }
 
-.logo .icon {
-  font-size: 40px;
+/* Desktop ekranlar için */
+@media (min-width: 1024px) {
+  .card {
+    max-width: 700px;
+    padding: 60px;
+  }
+}
+
+/* Büyük desktop ekranlar için */
+@media (min-width: 1440px) {
+  .card {
+    max-width: 800px;
+    padding: 70px;
+  }
+}
+
+.main-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  /* margin-bottom: 24px; */
 }
 
 h1 {
