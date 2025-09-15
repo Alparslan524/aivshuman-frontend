@@ -93,7 +93,7 @@ const shareText = computed(() => {
     return `AivsHuman oyununda 10 sorudan ${gameStore.classicScore.correct} doğru cevap vererek %${gameStore.successRate} başarı oranı yakaladım! Sen de dene!`;
 });
 
-const gameUrl = 'https://aivshuman.com'; // Burayı ileride kendi URL'nizle değiştirin
+const gameUrl = 'https://aivshuman.tr';
 
 const copyResults = () => {
     navigator.clipboard.writeText(shareText.value + ' ' + gameUrl).then(() => {
