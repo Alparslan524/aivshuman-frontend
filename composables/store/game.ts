@@ -15,6 +15,10 @@ export const useGameStore = defineStore('gameStore', () => {
   // Klasik mod için önceden yüklenmiş görseller
   const preloadedImages = ref<ImageResponse[]>([])
 
+  // Oyun başlangıç aşaması kontrolü
+  const showModeIntro = ref(false) // Mod tanıtım ekranı
+  const imagesPreloaded = ref(false) // Görseller yüklendi mi?
+
   // Sonuç ve skorlar
   const lastAnswerCorrect = ref<boolean | null>(null)
   const lastCorrectAnswerIsAI = ref<boolean | null>(null)
@@ -75,6 +79,24 @@ export const useGameStore = defineStore('gameStore', () => {
     isLoading.value = false
     timeRemaining.value = 30
     preloadedImages.value = []
+    showModeIntro.value = false
+    imagesPreloaded.value = false
+  }
+
+  // LocalStorage yardımcı fonksiyonları
+  function shouldSkipIntro(mode: string): boolean {
+    if (import.meta.client) {
+      const skipKey = `skipIntro_${mode}`
+      return localStorage.getItem(skipKey) === 'true'
+    }
+    return false
+  }
+
+  function setSkipIntro(mode: string, skip: boolean): void {
+    if (import.meta.client) {
+      const skipKey = `skipIntro_${mode}`
+      localStorage.setItem(skipKey, skip.toString())
+    }
   }
 
   // Klasik mod için 10 görseli önceden yükler
@@ -117,11 +139,39 @@ export const useGameStore = defineStore('gameStore', () => {
     resetGame()
     gameMode.value = mode
 
+    // Eğer kullanıcı intro'yu skip etmeyi seçmişse
+    if (shouldSkipIntro(mode)) {
+      if (mode === 'classic') {
+        await preloadClassicImages()
+        imagesPreloaded.value = true
+        // Intro'yu skip et, direkt oyuna başla
+        if (preloadedImages.value.length > 0) {
+          currentImage.value = preloadedImages.value[0] || null
+        }
+      } else {
+        await fetchNextImage()
+        startTimer()
+      }
+      return
+    }
+
+    // Normal intro akışı
     if (mode === 'classic') {
-      await preloadClassicImages() // Klasik mod için 10 görseli önceden yükle
+      showModeIntro.value = true
+      await preloadClassicImages()
+      imagesPreloaded.value = true
     } else {
-      await fetchNextImage() // Zamanlı mod için tek görsel yükle
-      startTimer()
+      showModeIntro.value = true
+      await fetchNextImage()
+    }
+  }
+
+  // Mod tanıtım ekranından gerçek oyuna başlar
+  function startActualGame() {
+    showModeIntro.value = false
+    // Klasik modda ilk görseli göster
+    if (gameMode.value === 'classic' && preloadedImages.value.length > 0) {
+      currentImage.value = preloadedImages.value[0] || null
     }
   }
 
@@ -175,7 +225,7 @@ export const useGameStore = defineStore('gameStore', () => {
         return
       }
 
-      // Önceden yüklenmiş görselleri kullan
+      // Önemli: currentImage'i de güncelle ki doğru ID ile API'ye istek atılsın
       currentImage.value = preloadedImages.value[currentQuestionIndex.value] || null
       lastAnswerCorrect.value = null
     } else {
@@ -190,10 +240,11 @@ export const useGameStore = defineStore('gameStore', () => {
     // State
     currentImage, gameMode, lastAnswerCorrect, lastCorrectAnswerIsAI,
     classicScore, timeAttackScore, gameFinished, currentQuestionIndex,
-    isLoading, timeRemaining, preloadedImages,
+    isLoading, timeRemaining, preloadedImages, showModeIntro, imagesPreloaded,
     // Getters
     successRate,
     // Actions
-    resetGame, startGame, answerQuestion, nextQuestion,
+    resetGame, startGame, startActualGame, answerQuestion, nextQuestion,
+    setSkipIntro, shouldSkipIntro,
   }
 })
