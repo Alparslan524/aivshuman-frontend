@@ -17,7 +17,7 @@
           </p>
         </div>
 
-        <!-- <div class="mode-card" :class="{ 'selected': selectedMode === 'time' }" @click="selectMode('time')">
+        <div class="mode-card" :class="{ 'selected': selectedMode === 'time' }" @click="selectMode('time')">
           <div class="mode-header">
             <span class="mode-icon">⏱️</span>
             <h2>Zamana Karşı</h2>
@@ -26,7 +26,8 @@
             <span class="status-dot time"></span>
             30 saniyede en yüksek puanı topla
           </p>
-        </div> -->
+        </div>
+
       </div>
 
       <p class="footer-text">Yapay zeka çağında insanlığını koru! 😎</p>

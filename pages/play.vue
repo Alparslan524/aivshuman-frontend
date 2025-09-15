@@ -8,6 +8,12 @@
                 :alt="`Soru ${index + 1} görseli`" @load="onImageLoad(index)" @error="onImageError(index)">
         </div>
 
+        <!-- Zamanlı mod için görselleri önceden render et (gizli) -->
+        <div v-if="gameStore.gameMode === 'time' && gameStore.timePreloadedImages.length > 0" class="hidden-preload">
+            <img v-for="(image, index) in gameStore.timePreloadedImages" :key="image.imageId" :src="image.imageUrl"
+                :alt="`Zamanlı mod görsel ${index + 1}`" @load="onImageLoad(index)" @error="onImageError(index)">
+        </div>
+
         <!-- Mod Tanıtım Ekranı -->
         <div v-if="gameStore.showModeIntro" class="intro-card">
             <div class="intro-content">
@@ -27,8 +33,11 @@
                 <!-- Zamanlı Mod Açıklaması -->
                 <div v-else class="intro-description">
                     <p class="intro-text">⚡ <strong>30 saniye</strong> içinde mümkün olduğunca çok soru cevaplayın</p>
-                    <p class="intro-text">🏆 Her doğru cevap <strong>100 puan</strong> kazandırır</p>
-                    <p class="intro-text">🔥 Hızlı düşünün, yüksek skor elde edin!</p>
+                    <p class="intro-text">🏆 Hızlı cevap verin, daha çok puan kazanın!</p>
+                    <p class="intro-text">🚀 <strong>0-2 saniye:</strong> 100 puan | <strong>2-5 saniye:</strong> 75
+                        puan</p>
+                    <p class="intro-text">⚡ <strong>5-8 saniye:</strong> 50 puan | <strong>8+ saniye:</strong> 25 puan
+                    </p>
                     <p class="intro-text">⏱️ Süre bitince oyun otomatik sonlanır</p>
                 </div>
 
@@ -114,6 +123,10 @@
             <div v-if="gameStore.lastAnswerCorrect !== null" class="feedback-container">
                 <div v-if="gameStore.lastAnswerCorrect" class="feedback correct">
                     <p>🎉 Doğru!</p>
+                    <!-- Zamanlı modda kazanılan puanı göster -->
+                    <div v-if="gameStore.gameMode === 'time'" class="points-earned">
+                        +{{ getLastEarnedPoints() }} Puan Kazandın!
+                    </div>
                 </div>
                 <div v-else class="feedback incorrect">
                     <p>😞 Yanlış! Doğru cevap: {{ gameStore.lastCorrectAnswerIsAI ? 'AI Yapımı' : 'İnsan Yapımı' }}</p>
@@ -160,6 +173,10 @@ const startGameWithPreference = () => {
         gameStore.setSkipIntro(gameStore.gameMode, true);
     }
     gameStore.startActualGame();
+};
+
+const getLastEarnedPoints = () => {
+    return gameStore.lastEarnedPoints || 0;
 };
 
 // Oyun bittiğinde sonuçlar sayfasına yönlendir
@@ -369,9 +386,14 @@ onMounted(() => {
 }
 
 .points-earned {
-    font-size: 0.9rem;
-    font-weight: 400;
-    margin-top: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 8px;
+    color: #f1c40f;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .next-button {
