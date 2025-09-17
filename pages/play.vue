@@ -88,7 +88,7 @@
 
                 <!-- Zamanlı Mod Başlığı -->
                 <template v-if="gameStore.gameMode === 'time'">
-                    <p>⏱️ {{ gameStore.timeRemaining }}s</p>
+                    <p>⏱️ {{ Math.ceil(gameStore.timeRemaining) }}s</p>
                     <div class="score">
                         <span>🏆 {{ gameStore.timeAttackScore }} Puan</span>
                     </div>
@@ -96,20 +96,31 @@
             </div>
 
             <div class="question-content">
-                <!-- API'den resim beklenirken yükleme göstergesi -->
-                <div v-if="gameStore.isLoading" class="loading-indicator">Yükleniyor...</div>
+                <!-- Resim yükleme alanı -->
+                <div class="image-container">
+                    <!-- API'den resim beklenirken lokalize spinner -->
+                    <div v-if="gameStore.isLoading" class="image-loading">
+                        <div class="image-spinner"></div>
+                        <p>Resim yükleniyor...</p>
+                    </div>
 
-                <!-- Klasik Mod: Önceden yüklenmiş görseller -->
-                <div v-else-if="gameStore.gameMode === 'classic'" class="preloaded-images-container">
-                    <img v-for="(image, index) in gameStore.preloadedImages" :key="image.imageId" :src="image.imageUrl"
-                        :alt="`Soru ${index + 1} görseli`" class="question-image"
-                        :class="{ 'active': index === gameStore.currentQuestionIndex }" @load="onImageLoad(index)"
-                        @error="onImageError(index)">
+                    <!-- Klasik Mod: Önceden yüklenmiş görseller -->
+                    <div v-else-if="gameStore.gameMode === 'classic'" class="preloaded-images-container">
+                        <img v-for="(image, index) in gameStore.preloadedImages" :key="image.imageId"
+                            :src="image.imageUrl" :alt="`Soru ${index + 1} görseli`" class="question-image"
+                            :class="{ 'active': index === gameStore.currentQuestionIndex }" @load="onImageLoad(index)"
+                            @error="onImageError(index)">
+                    </div>
+
+                    <!-- Zamanlı Mod: Tek görsel (eski yöntem) -->
+                    <img v-else-if="gameStore.currentImage" :src="gameStore.currentImage.imageUrl" alt="Soru görseli"
+                        class="question-image">
+
+                    <!-- Fallback: Resim yoksa placeholder -->
+                    <div v-else class="image-placeholder">
+                        <p>Resim yükleniyor...</p>
+                    </div>
                 </div>
-
-                <!-- Zamanlı Mod: Tek görsel (eski yöntem) -->
-                <img v-else-if="gameStore.currentImage" :src="gameStore.currentImage.imageUrl" alt="Soru görseli"
-                    class="question-image">
             </div>
 
             <!-- Cevap verilmediyse butonları göster -->
@@ -555,6 +566,9 @@ onMounted(() => {
     border-radius: 4px;
     position: relative;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .checkbox-container:hover .checkmark {
@@ -571,9 +585,7 @@ onMounted(() => {
     content: "";
     position: absolute;
     display: none;
-    left: 6px;
-    top: 2px;
-    width: 6px;
+    width: 5px;
     height: 10px;
     border: solid white;
     border-width: 0 2px 2px 0;
@@ -645,4 +657,46 @@ onMounted(() => {
     width: 1px;
     height: 1px;
 }
+
+/* Resim yükleme alanı stilleri */
+.image-container {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    height: 400px;
+    justify-content: center;
+}
+
+.image-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #8a71c9;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+.image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    color: #e0e0e0;
+    font-size: 1rem;
+}
 </style>
+```

@@ -39,6 +39,10 @@ export const useGameStore = defineStore('gameStore', () => {
 
   // Zamanlı mod için
   const timeRemaining = ref(30)
+  const gameStartTime = ref(0) // Oyunun başladığı zaman
+  const totalGameTime = 30 // Toplam oyun süresi (saniye)
+  const pausedTime = ref(0) // Duraklatılan toplam süre
+  const pauseStartTime = ref(0) // Duraklatmanın başladığı zaman
   let timerInterval: ReturnType<typeof setInterval> | null = null
 
   // --- API İLETİŞİMİ İÇİN HAZIRLIK ---
@@ -61,15 +65,52 @@ export const useGameStore = defineStore('gameStore', () => {
     }
   }
 
+  // Milisaniye bazlı timer sistemi
   function startTimer() {
-    if (timerInterval) return; // Zaten çalışıyorsa tekrar başlatma
+    if (timerInterval) return // Zaten çalışıyorsa tekrar başlatma
+
+    if (gameStartTime.value === 0) {
+      // İlk başlangıç
+      gameStartTime.value = Date.now()
+    }
+
     timerInterval = setInterval(() => {
-      timeRemaining.value--
-      if (timeRemaining.value <= 0) {
-        stopTimer()
-        gameFinished.value = true
+      updateTimeRemaining()
+    }, 100) // Her 100ms'de bir güncelle (daha akıcı)
+  }
+
+  function updateTimeRemaining() {
+    const currentTime = Date.now()
+    const elapsedTime = (currentTime - gameStartTime.value - pausedTime.value) / 1000 // Saniye cinsinden
+    const remaining = totalGameTime - elapsedTime
+
+    if (remaining <= 0) {
+      timeRemaining.value = 0
+      stopTimer()
+      gameFinished.value = true
+    } else {
+      timeRemaining.value = remaining
+    }
+  }
+
+  function pauseTimer() {
+    if (timerInterval && pauseStartTime.value === 0) {
+      stopTimer()
+      pauseStartTime.value = Date.now()
+    }
+  }
+
+  function resumeTimer() {
+    if (pauseStartTime.value > 0) {
+      // Duraklatılan süreyi toplam duraklatma süresine ekle
+      pausedTime.value += Date.now() - pauseStartTime.value
+      pauseStartTime.value = 0
+
+      // Timer'ı yeniden başlat
+      if (!gameFinished.value && timeRemaining.value > 0) {
+        startTimer()
       }
-    }, 1000)
+    }
   }
 
   // Zamanlı modda soru başlangıç zamanını ayarlar
@@ -113,6 +154,9 @@ export const useGameStore = defineStore('gameStore', () => {
     currentQuestionIndex.value = 0
     isLoading.value = false
     timeRemaining.value = 30
+    gameStartTime.value = 0
+    pausedTime.value = 0
+    pauseStartTime.value = 0
     preloadedImages.value = []
     timePreloadedImages.value = []
     timeCurrentIndex.value = 0
@@ -267,9 +311,9 @@ export const useGameStore = defineStore('gameStore', () => {
     const guessIsAI = guess === 'ai'
     isLoading.value = true
 
-    // Zamanlı modda, API isteği başlamadan önce zamanlayıcıyı durdur
+    // Zamanlı modda, API isteği başlamadan önce zamanlayıcıyı duraklat
     if (gameMode.value === 'time') {
-      stopTimer()
+      pauseTimer()
     }
 
     try {
@@ -303,6 +347,10 @@ export const useGameStore = defineStore('gameStore', () => {
 
     } catch (error) {
       console.error("Tahmin gönderilirken hata oluştu:", error)
+      // Hata durumunda da timer'ı devam ettir
+      if (gameMode.value === 'time') {
+        resumeTimer()
+      }
     } finally {
       isLoading.value = false
     }
@@ -323,10 +371,10 @@ export const useGameStore = defineStore('gameStore', () => {
     // Sonraki görseli göster
     currentImage.value = timePreloadedImages.value[timeCurrentIndex.value] || null
 
-    // Timer'ı yeniden başlat ve soru süresini kaydet
+    // Timer'ı devam ettir ve soru süresini kaydet
     if (!gameFinished.value) {
       setQuestionStartTime() // Yeni soru için süre takibini başlat
-      startTimer()
+      resumeTimer() // Timer'ı kaldığı yerden devam ettir
     }
   }
 
@@ -361,5 +409,6 @@ export const useGameStore = defineStore('gameStore', () => {
     // Actions
     resetGame, startGame, startActualGame, answerQuestion, nextQuestion,
     setSkipIntro, shouldSkipIntro, setQuestionStartTime, calculateTimeBasedScore,
+    pauseTimer, resumeTimer, updateTimeRemaining,
   }
 })
