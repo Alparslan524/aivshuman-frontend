@@ -324,20 +324,31 @@ h1 {
 
 .feedback-actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-top: 15px;
+}
+
+/* Tablet ve üstü için yan yana */
+@media (min-width: 768px) {
+  .feedback-actions {
+    flex-direction: row;
+  }
 }
 
 .feedback-btn {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
-  font-size: 0.9rem;
+  padding: 12px 16px;
+  font-size: 0.85rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  flex: 1;
+  text-align: left;
+  min-width: 0;
 }
 
 .feedback-btn.primary {
@@ -363,24 +374,53 @@ h1 {
 }
 
 .btn-icon {
-  font-size: 1.2rem;
-  margin-right: 10px;
+  font-size: 1.1rem;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .btn-content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .btn-title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-desc {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #dcdcdc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobil için daha büyük boyutlar */
+@media (min-width: 768px) {
+  .feedback-btn {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+  }
+
+  .btn-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+
+  .btn-title {
+    font-size: 1rem;
+  }
+
+  .btn-desc {
+    font-size: 0.8rem;
+  }
 }
 </style>
